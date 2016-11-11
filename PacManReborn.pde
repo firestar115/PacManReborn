@@ -67,6 +67,8 @@ void settings() {
 }
 
 void setup() {
+  map1rows = loadStrings("map1.prm");
+  
   board = loadImage("board.png");
   
   topbound = loadImage("topbound.png");
@@ -114,11 +116,46 @@ void setup() {
   pellet = loadImage("pellet.png");
   powerpellet = loadImage("powerpellet.png");
   
-  pacman = new PImage[4][4];
-  blinky = inky = pinky = clyde = new PImage[4][2];
+  pacmansprites = new PImage[4][4];
+  blinkysprites = new PImage[4][2];
+  inkysprites = new PImage[4][2];
+  pinkysprites = new PImage[4][2];
+  clydesprites = new PImage[4][2];
   
-  map1rows = loadStrings("map1.prm");
+  for(int dir = 0; dir < 4; dir++) {
+    blinkysprites[dir][0] = loadImage("blinky"+dir+"0.png");
+    blinkysprites[dir][1] = loadImage("blinky"+dir+"1.png");
+    inkysprites[dir][0] = loadImage("inky"+dir+"0.png");
+    inkysprites[dir][1] = loadImage("inky"+dir+"1.png");
+    pinkysprites[dir][0] = loadImage("pinky"+dir+"0.png");
+    pinkysprites[dir][1] = loadImage("pinky"+dir+"1.png");
+  }
+  
+  blinky = new Ghost() {
+    
+    public Tile targetTile(Ghost[] ghosts, PacMan player, int gameTime) {
+      return player.getTile();
+    }
+    
+    public Tile getDefaultTile() {
+      int x = 13;
+      int y = 11;
+      SEARCH: for(int row = 0; row < map1rows.length; row++) {
+        for(int column = 0; column < map1rows[row].length(); column++) {
+          if(map1rows[row].toCharArray()[column] == '&') {
+            x = column;
+            y = row;
+            break SEARCH;
+          }
+        }
+      }
+      return new Tile(x, y);
+    }
+    
+  };
 }
+
+int gameTime = 0;
 
 void draw() {
   background(0);
@@ -246,6 +283,8 @@ void draw() {
       }
     }
   }
+  image(blinkysprites[0][gameTime % 2], blinky.getTile().getX() * res * 8, (blinky.getTile().getY() + 3) * res * 8, 16 * res, 16 * res); // TODO Add offset ints for ghosts
+  gameTime++;
 }
 
 class Tile {
@@ -282,10 +321,26 @@ class PacMan {
     this.tileoffsety = 7;
   }
   
+  public Tile getTile() {
+    return tile;
+  }
+  
 }
 
 abstract class Ghost {
   
-  public abstract Tile targetTile(Ghost[] ghosts, PacMan player, int gameTimer);
+  protected Tile tile = getDefaultTile();
+  
+  public void move(Tile t) {
+    this.tile = t;
+  }
+  
+  public abstract Tile targetTile(Ghost[] ghosts, PacMan player, int gameTime);
+  
+  public abstract Tile getDefaultTile();
+  
+  public Tile getTile() {
+    return tile;
+  }
   
 }
